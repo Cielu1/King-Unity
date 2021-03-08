@@ -28,14 +28,15 @@ public class Game_Handler : MonoBehaviour
 
     List<GameObject> all_Cards = new List<GameObject>();
 
-    List<GameObject> player_A_Stock;
-    List<GameObject> player_B_Stock;
-    List<GameObject> player_C_Stock;
+    public List<GameObject> player_A_Stock = new List<GameObject>();
+    public List<GameObject> player_B_Stock = new List<GameObject>();
+    public List<GameObject> player_C_Stock = new List<GameObject>();
 
-    List<int> playersScores = new List<int>();
+    List<List<GameObject>> playersStocks = new List<List<GameObject>>();
+    Dictionary<int, int> playersRoundScores = new Dictionary<int, int>();
 
-    int playersMoved = 0;
-    int currentPlayer;
+    public int playersMoved = 0;
+    public int currentPlayer;
 
     Dictionary<string,int> allCardsValues = new Dictionary<string,int>();
     Dictionary<string, string> allCardsColors = new Dictionary<string, string>();
@@ -105,8 +106,12 @@ public class Game_Handler : MonoBehaviour
         for (int i = 0; i < 3; i++)
         {
             playersID.Add(i);
-            playersScores.Add(0);
+            playersRoundScores.Add(i,0);
+            
         }
+        playersStocks.Add(player_A_Stock);
+        playersStocks.Add(player_B_Stock);
+        playersStocks.Add(player_C_Stock);
     }
     
     bool IsCurrentPlayer(int id)
@@ -123,6 +128,7 @@ public class Game_Handler : MonoBehaviour
         var id = currentPlayer;
         foreach(GameObject gameObject in stock)
         {
+
             int score = 0;
             int value;
             string color;
@@ -130,13 +136,40 @@ public class Game_Handler : MonoBehaviour
             allCardsColors.TryGetValue(gameObject.name, out color);
             score += value;
             if (color == dominant) score += 100;
-            playersScores[id] += score;
-            Debug.LogWarning("player ID: " + id +" scored: " +  playersScores[id]);
+            playersRoundScores[id] += score;
+            Debug.LogWarning("player ID: " + id +" scored: " +  playersRoundScores[id]);
             id++;
         }
+
+        //player ID of a player with highest score
+        int roundWinner = FindKeyWithHighestValue(playersRoundScores);
+        Debug.LogWarning("player with ID: " + roundWinner + " scored highest: " + playersRoundScores[roundWinner]);
+        
+        foreach(GameObject gameObject in stock)
+        {
+            playersStocks[roundWinner].Add(gameObject);
+        }
         playersMoved = 0;
+        currentPlayer = roundWinner;
+        for (int i = 0; i<3; i++)
+        {
+            playersRoundScores[i] = 0;
+        }
+
+
     }
 
+    int FindKeyWithHighestValue(Dictionary<int,int> results)
+    {
+        KeyValuePair<int, int> max= new KeyValuePair<int, int>();
+
+        foreach (KeyValuePair<int,int> kvp in results)
+        {
+            if (kvp.Value > max.Value)
+                max = kvp;
+        }
+        return max.Key;
+    }
 
     //list of random numbers without duplicating
     List<int> RandomNumbersWithoutDuplicates(int count, int min, int max)
@@ -212,15 +245,20 @@ public class Game_Handler : MonoBehaviour
 
     }
 
-    void SwapCards(GameObject cardA, GameObject cardB)
+    void SwapCards(List<GameObject> cardsA, int cardA, List<GameObject> cardsB, int cardB)
     {
-        Vector3 tempPos = cardA.transform.position;
-        cardA.transform.position = cardB.transform.position;
-        cardB.transform.position = tempPos;
+        Vector3 tempPos = cardsA[cardA].transform.position;
+        cardsA[cardA].transform.position = cardsB[cardB].transform.position;
+        cardsB[cardB].transform.position = tempPos;
 
-        string tempName = cardA.name;
-        cardA.name = cardB.name;
-        cardB.name = tempName;
+        GameObject tempCard = cardsA[cardA];
+        cardsA[cardA] = cardsB[cardB];
+        cardsB[cardB] = tempCard;
+
+
+       // string tempName = cardA.name;
+       // cardA.name = cardB.name;
+       // cardB.name = tempName;
     }
 
     GameObject SetCard(GameObject card)
@@ -231,7 +269,7 @@ public class Game_Handler : MonoBehaviour
     {
         for (int j =0; j< list.Count(); j++)
         {
-            SwapCards(list[j], all_Cards[i[j]]);
+            SwapCards(list,j, all_Cards,i[j]);
         }
     }
 
@@ -244,7 +282,7 @@ public class Game_Handler : MonoBehaviour
         switch (id)
         {
             case 0:
-                if (playerAMoved != true)
+                if (IsCurrentPlayer(0))
                 {
                     playerAMoved = true;
                     playersMoved++;
@@ -252,7 +290,7 @@ public class Game_Handler : MonoBehaviour
                 }
                 break;
             case 1:
-                if (playerBMoved != true)
+                if (IsCurrentPlayer(1))
                 {
                     playerBMoved = true;
                     playersMoved++;
@@ -260,7 +298,7 @@ public class Game_Handler : MonoBehaviour
                 }
                 break;
             case 2:
-                if (playerCMoved != true)
+                if (IsCurrentPlayer(2))
                 {
                     playerCMoved = true;
                     playersMoved++;
@@ -276,7 +314,7 @@ public class Game_Handler : MonoBehaviour
         {
             if (IsCurrentPlayer(0))
             {
-                SwapCards(player_A_Hand[id], stock[0]);
+                SwapCards(player_A_Hand,id, stock,0);
             }
             else { Debug.LogError("It is not your turn, A!"); }
         }
@@ -284,7 +322,7 @@ public class Game_Handler : MonoBehaviour
         {
             if (IsCurrentPlayer(1))
             {
-                SwapCards(player_B_Hand[id-10], stock[1]);
+                SwapCards(player_B_Hand,id-10, stock,1);
             }
             else { Debug.LogError("It is not your turn, B!"); }
         }
@@ -292,7 +330,7 @@ public class Game_Handler : MonoBehaviour
         {
             if (IsCurrentPlayer(2))
             {
-                SwapCards(player_C_Hand[id-20], stock[2]);
+                SwapCards(player_C_Hand,id-20, stock,2);
             }
             else { Debug.LogError("It is not your turn, C!"); }
         }
