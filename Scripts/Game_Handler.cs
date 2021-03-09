@@ -41,6 +41,8 @@ public class Game_Handler : MonoBehaviour
     Dictionary<string,int> allCardsValues = new Dictionary<string,int>();
     Dictionary<string, string> allCardsColors = new Dictionary<string, string>();
 
+    public GameObject buttonTemplate;
+
     // Start is called before the first frame update
     void Start()
     {
