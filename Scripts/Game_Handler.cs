@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-
-
+using UnityEngine.UI;
 
 public class Game_Handler : MonoBehaviour
 {
@@ -42,6 +41,7 @@ public class Game_Handler : MonoBehaviour
     Dictionary<string, string> allCardsColors = new Dictionary<string, string>();
 
     public GameObject buttonTemplate;
+    public GameObject Layout;
 
     // Start is called before the first frame update
     void Start()
@@ -49,8 +49,27 @@ public class Game_Handler : MonoBehaviour
         AddPlayers();
         AddAllCards();
         DrawStartCards();
+        SpawnCards();
     }
 
+    void SpawnCards()
+    {
+        int k = 0;
+        for (int j = 0; j < 3; j++)
+        {
+            for (int i = 0; i < 10; i++)
+            {
+
+                //Button button = GetComponent<Button>();
+                GameObject button = new GameObject("button" + k);
+                button.AddComponent<Button>();
+                button.GetComponent<Button>().onClick.AddListener(() => { int tmp = k; ButtonPressedID(k); });
+                button.name = "Button " + k;
+                button.transform.SetParent(Layout.transform);
+                k++;
+            }
+        }
+    }
     void AddAllCards()
     {
         int value = 0;
@@ -127,7 +146,7 @@ public class Game_Handler : MonoBehaviour
         string dominant;
         allCardsColors.TryGetValue(stock[0].name, out dominant);
         Debug.LogError(dominant);
-        var id = currentPlayer;
+        var id = 0;
         foreach(GameObject gameObject in stock)
         {
 
@@ -141,6 +160,7 @@ public class Game_Handler : MonoBehaviour
             playersRoundScores[id] += score;
             Debug.LogWarning("player ID: " + id +" scored: " +  playersRoundScores[id]);
             id++;
+           // gameObject.SetActive(false);
         }
 
         //player ID of a player with highest score
@@ -158,7 +178,36 @@ public class Game_Handler : MonoBehaviour
             playersRoundScores[i] = 0;
         }
 
+        PutCardsToPlayerStock(roundWinner);
 
+    }
+
+    void PutCardsToPlayerStock(int id)
+    {
+        float y = 0;
+        float x = 30;
+        foreach(GameObject card in playersStocks[id])
+        {
+            x += 3.5f;
+        }
+        switch (id)
+        {
+            case 0:
+                y = 0;
+                break;
+            case 1:
+                y = -5;
+                break;
+            case 2:
+                y = -10;
+                break;
+        }
+
+        for (int i = 0; i<3; i++)
+        {
+            stock[i].transform.position = new Vector3(x, y, 0);
+            x += 3.5f;
+        }
     }
 
     int FindKeyWithHighestValue(Dictionary<int,int> results)
@@ -312,6 +361,8 @@ public class Game_Handler : MonoBehaviour
 
     public void ButtonPressedID(int id)
     {
+        Debug.LogWarning("ID: " + id);
+
         if (id < 10 && id >= 0)
         {
             if (IsCurrentPlayer(0))
